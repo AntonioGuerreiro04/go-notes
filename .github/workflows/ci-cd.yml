@@ -1,0 +1,38 @@
+name: Go-Notes CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar ambiente Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Compilar a aplicação
+        run: go build -v -o go-notes-app
+
+      - name: Executar testes unitários
+        run: go test -v ./...
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Ligar ao Servidor e Executar Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: aluno
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/appuser/go-notes
+            ./deploy.sh
